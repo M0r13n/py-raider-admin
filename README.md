@@ -1,4 +1,7 @@
 # py-raider-reporter
+[![PyPI](https://img.shields.io/pypi/v/py-raider-admin)](https://pypi.org/project/py-raider-admin/)
+[![license](https://img.shields.io/pypi/l/py-raider-admin)](https://github.com/M0r13n/py-raider-admin/blob/master/LICENSE)
+[![codecov](https://codecov.io/gh/M0r13n/py-raider-admin/branch/master/graph/badge.svg)](https://codecov.io/gh/M0r13n/py-raider-admin)
 
 
 #### Raider Admin Interface for Python. Simply manage payouts from Python. Used in pair with [Raider](https://github.com/valeriansaliou/raider), the Affiliates Tracker Page.
