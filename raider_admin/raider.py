@@ -1,3 +1,6 @@
+"""
+Raider admin code.
+"""
 import contextlib
 from dataclasses import dataclass
 import datetime
@@ -10,6 +13,8 @@ from unittest.main import main
 import mysql.connector as mysql
 from mysql.connector import Error
 
+# Custom exceptions
+
 
 class ConnectionError(Exception):
     pass
@@ -20,11 +25,16 @@ class MalformedConfigurationError(Exception):
 
 
 class PayoutStatus(Enum):
+    """
+    These are all possible status values a payout can have.
+    """
     Undefined = ''
     Accepted = 'accepted'
     Pending = 'pending'
     Rejected = 'rejected'
     Processed = 'processed'
+
+# Dataclasses
 
 
 @dataclass
@@ -101,11 +111,16 @@ class RaiderAdmin(object):
         user: str,
         password: str
     ) -> None:
+        """
+        You either have to run this script on the same machine as your DB is running on or expose the db to the outide world.
+        If you decide to do the latter, you should create a special user with limited privileges for that.
+        """
         self.host: str = host
         self.database: str = database
         self.user: str = user
         self.password: str = password
 
+        # all these values are needed
         for attr in ('host', 'database', 'user', 'password'):
             if not getattr(self, attr):
                 raise ValueError(f"{attr} must not be None!")
@@ -119,6 +134,10 @@ class RaiderAdmin(object):
 
     @classmethod
     def from_config(cls, config: typing.Dict):
+        """
+        Convenience method. 
+        Make sure your dict has the following keys: [host, database, user, password]
+        """
         config = {k.lower(): v for k, v in config.items()}
         try:
             return cls(
@@ -131,6 +150,9 @@ class RaiderAdmin(object):
             raise MalformedConfigurationError("Your Config is malformed!") from e
 
     def _try_connect(self):
+        """
+        Try to connec to to MySQL and raise an ConnectionError on error
+        """
         try:
             return mysql.connect(
                 host=self.host,
@@ -143,6 +165,13 @@ class RaiderAdmin(object):
 
     @contextlib.contextmanager
     def connection(self):
+        """
+        Custom context manager that handles commits, rollbacks and closes.
+        Usage:
+
+        >>> with self.connection() as conn:
+                # do something
+        """
         connection = self._try_connect()
 
         try:
@@ -157,6 +186,12 @@ class RaiderAdmin(object):
 
     @contextlib.contextmanager
     def cursor(self):
+        """
+        Custom context manager that handles closing the cursor.
+        Usage:
+        >>> with self.cursor() as cur:
+                # do something
+        """
         with self.connection() as conn:
             cursor = conn.cursor(prepared=True)
             try:
@@ -175,10 +210,17 @@ class RaiderAdmin(object):
                 return Payout.from_tuple(record[0])
             return None
 
-    def get_open_payouts(self) -> typing.List[Payout]:
+    def get_open_payouts(self, limit: int = 100, offset: int = 0) -> typing.List[Payout]:
         with self.cursor() as cur:
-            query = "SELECT * FROM `payout` WHERE `payout`.`status`=\"pending\";"
-            cur.execute(query)
+            query = "SELECT * FROM `payout` WHERE `payout`.`status`=\"pending\" ORDER BY `payout`.`updated_at` DESC LIMIT %s OFFSET %s;"
+            cur.execute(query, (limit, offset))
+            records = cur.fetchall()
+            return [Payout.from_tuple(payout) for payout in records]
+
+    def get_all_payouts(self, limit: int = 100, offset: int = 0) -> typing.List[Payout]:
+        with self.cursor() as cur:
+            query = "SELECT * FROM `payout` ORDER BY `payout`.`updated_at` DESC LIMIT %s OFFSET %s;"
+            cur.execute(query, (limit, offset))
             records = cur.fetchall()
             return [Payout.from_tuple(payout) for payout in records]
 

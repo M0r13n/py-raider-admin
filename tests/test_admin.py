@@ -237,6 +237,28 @@ class VigilTestSuite(unittest.TestCase):
             assert isinstance(payouts, List)
             assert isinstance(payouts[0], Payout)
             assert len(payouts) == 1
+            assert mock_cursor.query_args == (100, 0)
+
+
+    
+    def test_get_all_payouts(self):
+        with patch('raider_admin.raider.RaiderAdmin._try_connect') as mock_func:
+            mock_cursor = MockCursor(result=[
+                (
+                    4, 1, Decimal('150.00'), 'EUR', 'processed', "blu", "bli", 2,
+                    datetime.datetime(2020, 7, 10, 12, 37, 49),
+                    datetime.datetime(2020, 7, 10, 12, 37, 49)
+                )
+            ])
+            mock_conn = MockConnection(mock_cursor)
+            mock_func.return_value = mock_conn
+            raider_admin = RaiderAdmin.from_config(SAMPLE_CONFIG)
+            payouts = raider_admin.get_all_payouts(limit=100, offset=900)
+
+            assert isinstance(payouts, List)
+            assert isinstance(payouts[0], Payout)
+            assert len(payouts) == 1
+            assert mock_cursor.query_args == (100, 900)
 
     def test_get_account_data(self):
         with patch('raider_admin.raider.RaiderAdmin._try_connect') as mock_func:

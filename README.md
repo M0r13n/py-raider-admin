@@ -31,7 +31,25 @@ $ pip install py-raider-admin
 `raider-admin` can be instantiated as such:
 
 ```py
-TODO
+conf = {
+    'host':'localhost',
+    'database':'raider',
+    'user':'some_user',
+    'password':'some_pass'
+}
+admin = RaiderAdmin.from_config(conf)
+
+# get the newest 100 open payouts
+admin.get_open_payouts()
+
+# get all payouts ever
+admin.get_all_payouts(limit=100000)
+
+# get account information for account id 345
+admin.get_account_data(345)
+
+# change status of payout with id 34 to processed
+admin.set_status(34, PayoutStatus.Processed)
 ```
 
 
